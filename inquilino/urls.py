@@ -15,4 +15,7 @@ urlpatterns = [
     # Rotas de Manutenção (Agora são apenas duas)
     path('manutencoes/adicionar/', views.adicionar_manutencoes, name='adicionar_manutencoes'),
     path('manutencoes/ver/', views.ver_manutencoes_inquilino, name='ver_manutencoes_inquilino'),
+
+    path('financas/', views.ver_financas, name='ver_financas'),
+    path('financas/pagar/<int:pk>/', views.pagar_renda, name='pagar_renda'),
 ]

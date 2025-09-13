@@ -37,16 +37,6 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="mb-4">
-                <label for="inquilino" class="block text-sm font-medium text-gray-700">Inquilino (opcional)</label>
-                <select name="inquilino" id="inquilino"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                    <option value="">-- Nenhum Inquilino --</option>
-                    {% for inquilino in inquilinos %}
-                        <option value="{{ inquilino.id }}" {% if inquilino == casa.inquilino %}selected{% endif %}>{{ inquilino.user.username }}</option>
-                    {% endfor %}
-                </select>
-            </div>
             <button type="submit" class="w-full px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Atualizar</button>
         </form>
     </div>

@@ -1,0 +1,62 @@
+{% extends 'gerente/base_gerente.html' %}
+{% load static %}
+
+{% block title %}Adicionar Contrato{% endblock %}
+
+{% block inner_content %}
+<div class="container mx-auto p-4">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Adicionar Novo Contrato</h1>
+    </div>
+
+    {% if messages %}
+        <div class="p-4 rounded-md mb-4">
+            {% for message in messages %}
+                <div class="p-3 text-sm {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %} rounded-md" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="bg-white p-6 rounded-lg shadow">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label for="inquilino" class="block text-sm font-medium text-gray-700">Inquilino</label>
+                <select name="inquilino" id="inquilino" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                    <option value="">Selecione um inquilino</option>
+                    {% for inquilino in inquilinos_disponiveis %}
+                        <option value="{{ inquilino.id }}">{{ inquilino.user.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="casa_vaga" class="block text-sm font-medium text-gray-700">Casa Vaga</label>
+                <select name="casa_vaga" id="casa_vaga" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                    <option value="">Selecione uma casa</option>
+                    {% for casa in casas_vagas %}
+                        <option value="{{ casa.id }}">{{ casa.predio.nome }} - Casa {{ casa.numero }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="duracao_anos" class="block text-sm font-medium text-gray-700">Duração do Contrato</label>
+                <select name="duracao_anos" id="duracao_anos" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                    <option value="">Selecione a duração</option>
+                    {% for value, label in anos_de_contrato %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="valor_aluguel" class="block text-sm font-medium text-gray-700">Valor da Renda</label>
+                <input type="number" name="valor_aluguel" id="valor_aluguel" step="0.01" min="0" class="mt-1 block w-full pl-3 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" placeholder="Ex: 1500.00" required>
+            </div>
+            <div class="flex justify-end">
+                <button type="submit" class="px-4 py-2 text-white bg-green-600 rounded-md hover:bg-green-700">Criar Contrato</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

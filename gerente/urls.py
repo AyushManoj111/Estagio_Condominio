@@ -27,4 +27,9 @@ urlpatterns = [
     path('manutencoes/<int:manutencao_id>/atualizar-estado/', views.atualizar_estado_manutencao, name='atualizar_estado_manutencao'),
     path('manutencoes/adicionar/', views.adicionar_manutencao, name='adicionar_manutencao'),
     path('manutencoes/excluir/<int:manutencao_id>/', views.excluir_manutencao, name='excluir_manutencao'),
+
+    path('contratos/', views.ver_contratos, name='ver_contratos'),
+    path('contratos/adicionar/', views.adicionar_contrato, name='adicionar_contrato'),
+    path('contratos/<int:pk>/editar/', views.editar_contrato, name='editar_contrato'),
+    path('contratos/<int:pk>/excluir/', views.excluir_contrato, name='excluir_contrato'),
 ]

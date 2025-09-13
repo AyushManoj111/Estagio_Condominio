@@ -66,11 +66,11 @@ class Manutencao(models.Model):
             return f'Manutenção sem local definido'
 
 class Contratos(models.Model):
-    # ... (código do modelo Contratos, sem alterações)
     data_inicio = models.DateField()
     valor_renda = models.DecimalField(max_digits=10, decimal_places=2)
     duracao_meses = models.IntegerField(verbose_name='Duração (meses)')
     inquilino = models.ForeignKey(Inquilino, on_delete=models.CASCADE, related_name='contratos')
+    casa = models.ForeignKey(Casa, on_delete=models.CASCADE, related_name='contratos', null=True, blank=True)
 
     def __str__(self):
-        return f'Contrato para {self.inquilino.nome} - Início: {self.data_inicio}'
+        return f'Contrato para {self.inquilino.user.get_full_name() or self.inquilino.user.username} - Casa {self.casa.numero} - Início: {self.data_inicio}'

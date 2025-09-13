@@ -4,7 +4,13 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.models import Group
 from django.contrib.auth.decorators import login_required, user_passes_test
-from gerente.models import Inquilino, Casa, Manutencao
+from gerente.models import Inquilino, Casa, Manutencao, Contratos
+from .models import PagamentoRenda
+from django.db import transaction
+from django.db.models import Q
+from datetime import date
+from dateutil.relativedelta import relativedelta
+import uuid
 
 # --- Funções auxiliares para verificação de permissões ---
 def is_inquilino(user):
@@ -142,3 +148,81 @@ def adicionar_manutencoes(request):
         'manutencao_choices': Manutencao.TIPO_CHOICES,
     }
     return render(request, 'inquilino/adicionar_manutencoes.html', context)
+
+@user_passes_test(is_inquilino, login_url='login_inquilino')
+def ver_financas(request):
+    try:
+        inquilino = request.user.inquilino
+        contrato_ativo = Contratos.objects.filter(inquilino=inquilino).order_by('-data_inicio').first()
+
+        pagamentos = []
+        if contrato_ativo:
+            # Gerar pagamentos para a duração total do contrato
+            gerar_pagamentos_em_falta(contrato_ativo)
+
+            # Obter todos os pagamentos para este contrato
+            pagamentos = PagamentoRenda.objects.filter(contrato=contrato_ativo).order_by('mes_referencia')
+
+    except Exception as e:
+        pagamentos = []
+        messages.error(request, f'Ocorreu um erro ao carregar as finanças: {e}')
+
+    context = {
+        'pagamentos': pagamentos,
+    }
+    return render(request, 'inquilino/financas.html', context)
+
+def gerar_pagamentos_em_falta(contrato):
+    """
+    Função auxiliar para gerar pagamentos mensais para a duração total de um contrato.
+    """
+    # Encontrar a data final do contrato
+    data_fim_contrato = contrato.data_inicio + relativedelta(months=contrato.duracao_meses)
+    
+    # Encontrar a data do último pagamento gerado
+    ultimo_pagamento = PagamentoRenda.objects.filter(contrato=contrato).order_by('-mes_referencia').first()
+    
+    if ultimo_pagamento:
+        mes_inicio_geracao = ultimo_pagamento.mes_referencia + relativedelta(months=1)
+    else:
+        mes_inicio_geracao = date(contrato.data_inicio.year, contrato.data_inicio.month, 1)
+
+    # Gerar pagamentos até a data final do contrato
+    while mes_inicio_geracao < data_fim_contrato:
+        # Gerar uma referência única para o pagamento
+        referencia = f"{contrato.id}-{mes_inicio_geracao.year}{mes_inicio_geracao.month:02d}-{uuid.uuid4().hex[:6]}"
+        
+        PagamentoRenda.objects.get_or_create(
+            contrato=contrato,
+            mes_referencia=mes_inicio_geracao,
+            defaults={
+                'valor': contrato.valor_renda,
+                'entidade': '9501',
+                'referencia': referencia,
+            }
+        )
+        mes_inicio_geracao += relativedelta(months=1)
+
+
+@user_passes_test(is_inquilino, login_url='login_inquilino')
+def pagar_renda(request, pk):
+    """
+    Simula o pagamento de uma renda.
+    """
+    if request.method == 'POST':
+        pagamento = get_object_or_404(PagamentoRenda, pk=pk)
+        
+        # O inquilino só pode pagar se for o seu próprio pagamento
+        if pagamento.contrato.inquilino.user != request.user:
+            messages.error(request, 'Não tem permissão para realizar esta ação.')
+            return redirect('ver_financas')
+
+        if pagamento.estado == 'nao_pago':
+            with transaction.atomic():
+                pagamento.estado = 'pago'
+                pagamento.save()
+            messages.success(request, f'Pagamento de {pagamento.mes_referencia.strftime("%B/%Y")} efetuado com sucesso!')
+        else:
+            messages.info(request, 'Este pagamento já foi efetuado.')
+    
+    return redirect('ver_financas')

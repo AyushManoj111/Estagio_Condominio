@@ -5,8 +5,11 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.models import User
 from django.shortcuts import render
 from django.contrib.auth.decorators import user_passes_test
-from .models import Casa, Gerente, Predio, Inquilino, Manutencao
+from .models import Casa, Gerente, Predio, Inquilino, Manutencao, Contratos
 from django.db.models import Q
+from datetime import date
+from dateutil.relativedelta import relativedelta
+from django.db import transaction
 
 # --- Funções auxiliares para verificação de permissões ---
 def is_gerente(user):
@@ -86,16 +89,15 @@ def ver_casas(request):
 @user_passes_test(is_gerente, login_url='login_gerente')
 def adicionar_casa(request):
     """
-    Permite ao Gerente adicionar uma nova casa usando formulário HTML puro.
+    Permite ao Gerente adicionar uma nova casa usando formulário HTML puro,
+    sem a opção de atribuir um inquilino.
     """
     gerente = request.user.gerente
     predios_do_gerente = Predio.objects.filter(gerente=gerente)
-    inquilinos_disponiveis = Inquilino.objects.all()
 
     if request.method == 'POST':
         numero = request.POST.get('numero')
         predio_id = request.POST.get('predio')
-        inquilino_id = request.POST.get('inquilino')
 
         # 1. Validação básica
         if not numero or not predio_id:
@@ -105,41 +107,33 @@ def adicionar_casa(request):
         # 2. Verifica se o prédio pertence ao gerente
         predio = get_object_or_404(Predio, id=predio_id, gerente=gerente)
         
-        inquilino = None
-        if inquilino_id:
-            inquilino = get_object_or_404(Inquilino, id=inquilino_id)
-
-        # 3. Cria a nova casa
+        # 3. Cria a nova casa sem um inquilino
         Casa.objects.create(
             numero=numero,
             predio=predio,
-            inquilino=inquilino
+            inquilino=None
         )
         messages.success(request, 'Casa adicionada com sucesso!')
         return redirect('ver_casas')
 
     context = {
         'predios': predios_do_gerente,
-        'inquilinos': inquilinos_disponiveis
     }
     return render(request, 'gerente/adicionar_casa.html', context)
-
 
 @user_passes_test(is_gerente, login_url='login_gerente')
 def editar_casa(request, casa_id):
     """
-    Permite ao Gerente editar uma casa existente usando formulário HTML puro.
+    Permite ao Gerente editar uma casa existente, sem a opção de alterar o inquilino.
     """
     gerente = request.user.gerente
     casa = get_object_or_404(Casa, id=casa_id, predio__gerente=gerente)
     
     predios_do_gerente = Predio.objects.filter(gerente=gerente)
-    inquilinos_disponiveis = Inquilino.objects.all()
 
     if request.method == 'POST':
         numero = request.POST.get('numero')
         predio_id = request.POST.get('predio')
-        inquilino_id = request.POST.get('inquilino')
 
         if not numero or not predio_id:
             messages.error(request, 'O número da casa e o prédio são obrigatórios.')
@@ -149,10 +143,8 @@ def editar_casa(request, casa_id):
         casa.numero = numero
         casa.predio = get_object_or_404(Predio, id=predio_id, gerente=gerente)
         
-        if inquilino_id:
-            casa.inquilino = get_object_or_404(Inquilino, id=inquilino_id)
-        else:
-            casa.inquilino = None
+        # A atribuição de inquilino agora é feita apenas pela gestão de contratos.
+        # Nenhuma mudança é feita no campo `inquilino` aqui.
             
         casa.save()
         messages.success(request, 'Casa editada com sucesso!')
@@ -161,7 +153,6 @@ def editar_casa(request, casa_id):
     context = {
         'casa': casa,
         'predios': predios_do_gerente,
-        'inquilinos': inquilinos_disponiveis
     }
     return render(request, 'gerente/editar_casa.html', context)
     
@@ -187,12 +178,16 @@ def excluir_casa(request, casa_id):
 @user_passes_test(is_gerente, login_url='login_gerente')
 def ver_inquilinos(request):
     """
-    Exibe uma lista de inquilinos associados aos prédios do Gerente logado.
+    Exibe uma lista de inquilinos associados aos prédios do Gerente logado,
+    incluindo aqueles sem casa alugada.
     """
     try:
         gerente = request.user.gerente
-        # Filtra os inquilinos que têm uma casa em um prédio do gerente.
-        inquilinos = Inquilino.objects.filter(casas_alugadas__predio__gerente=gerente).distinct()
+        # Filtra inquilinos que têm uma casa em um prédio do gerente OU
+        # não têm nenhuma casa alugada.
+        inquilinos = Inquilino.objects.filter(
+            Q(casas_alugadas__predio__gerente=gerente) | Q(casas_alugadas__isnull=True)
+        ).distinct()
     except Inquilino.DoesNotExist:
         inquilinos = []
     
@@ -205,17 +200,12 @@ def ver_inquilinos(request):
 @user_passes_test(is_gerente, login_url='login_gerente')
 def adicionar_inquilino(request):
     """
-    Permite ao Gerente adicionar um novo inquilino, com a opção de atribuí-lo a uma casa vaga
-    e adicionando o usuário ao grupo 'Inquilino'.
+    Permite ao Gerente adicionar um novo inquilino e adicioná-lo ao grupo 'Inquilino'.
     """
-    gerente = request.user.gerente
-    casas_vagas = Casa.objects.filter(inquilino__isnull=True, predio__gerente=gerente)
-
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
         contacto = request.POST.get('contacto')
-        casa_id = request.POST.get('casa_id') # Campo para a casa vaga
 
         # 1. Validação básica
         if not username or not password or not contacto:
@@ -227,34 +217,24 @@ def adicionar_inquilino(request):
             messages.error(request, 'Nome de utilizador já existe. Por favor, escolha outro.')
             return redirect('adicionar_inquilino')
 
-        # 3. Cria o novo User e o perfil de Inquilino
-        user = User.objects.create_user(username=username, password=password)
-        inquilino = Inquilino.objects.create(user=user, contacto=contacto)
-        
-        # 4. Adiciona o usuário ao grupo 'Inquilino'
         try:
+            # 3. Cria o novo User e o perfil de Inquilino
+            user = User.objects.create_user(username=username, password=password)
+            inquilino = Inquilino.objects.create(user=user, contacto=contacto)
+            
+            # 4. Adiciona o usuário ao grupo 'Inquilino'
             inquilino_group, created = Group.objects.get_or_create(name='Inquilino')
             user.groups.add(inquilino_group)
-        except Exception:
-            messages.warning(request, 'O grupo "Inquilino" não foi encontrado. O inquilino foi criado, mas não foi adicionado ao grupo.')
-        
-        # 5. Atribui o inquilino à casa, se uma foi selecionada
-        if casa_id:
-            try:
-                casa = Casa.objects.get(id=casa_id, inquilino__isnull=True, predio__gerente=gerente)
-                casa.inquilino = inquilino
-                casa.save()
-            except Casa.DoesNotExist:
-                messages.warning(request, 'A casa selecionada não está disponível ou não pertence a você. O inquilino foi criado, mas não foi atribuído a uma casa.')
-                return redirect('ver_inquilinos')
+            
+            messages.success(request, 'Inquilino adicionado com sucesso!')
+            return redirect('ver_inquilinos')
 
-        messages.success(request, 'Inquilino adicionado com sucesso!')
-        return redirect('ver_inquilinos')
-        
-    context = {
-        'casas_vagas': casas_vagas
-    }
-    return render(request, 'gerente/adicionar_inquilino.html', context)
+        except Exception as e:
+            messages.error(request, f'Ocorreu um erro ao adicionar o inquilino: {e}')
+            return redirect('adicionar_inquilino')
+            
+    # Para requisições GET, apenas renderiza o formulário
+    return render(request, 'gerente/adicionar_inquilino.html')
 
 
 @user_passes_test(is_gerente, login_url='login_gerente')
@@ -419,3 +399,210 @@ def excluir_manutencao(request, manutencao_id):
             messages.error(request, f'Erro ao excluir a manutenção: {e}')
             
     return redirect('ver_manutencoes')
+
+@user_passes_test(is_gerente, login_url='login_gerente')
+def ver_contratos(request):
+    """
+    Exibe uma lista de contratos associados aos prédios do Gerente logado.
+    """
+    try:
+        gerente = request.user.gerente
+        # Filtra os contratos cujos inquilinos têm uma casa num prédio do gerente.
+        contratos = Contratos.objects.filter(
+            inquilino__casas_alugadas__predio__gerente=gerente
+        ).distinct().select_related('inquilino__user').prefetch_related('inquilino__casas_alugadas__predio')
+
+        hoje = date.today()
+        for contrato in contratos:
+            # Duração total em meses
+            contrato.duracao_total = f'{contrato.duracao_meses} meses'
+            
+            # Data de término do contrato
+            data_termino = contrato.data_inicio + relativedelta(months=+contrato.duracao_meses)
+            
+            # Cálculo da duração restante
+            delta = relativedelta(data_termino, hoje)
+            
+            if delta.years > 0:
+                contrato.duracao_restante = f'{delta.years} anos e {delta.months} meses'
+            elif delta.months > 0:
+                contrato.duracao_restante = f'{delta.months} meses'
+            elif delta.days > 0:
+                contrato.duracao_restante = f'{delta.days} dias'
+            else:
+                contrato.duracao_restante = 'Expirado'
+
+    except Exception as e:
+        # Lida com erros de forma graciosa
+        contratos = []
+        # Opcionalmente, pode adicionar uma mensagem de erro:
+        # from django.contrib import messages
+        # messages.error(request, f'Ocorreu um erro ao carregar os contratos: {e}')
+
+    context = {
+        'contratos': contratos
+    }
+    return render(request, 'gerente/ver_contratos.html', context)
+
+@user_passes_test(is_gerente, login_url='login_gerente')
+def adicionar_contrato(request):
+    gerente = request.user.gerente
+    
+    inquilinos_disponiveis = Inquilino.objects.filter(
+        Q(casas_alugadas__predio__gerente=gerente) | Q(casas_alugadas__isnull=True)
+    ).exclude(
+        contratos__isnull=False
+    ).distinct()
+
+    casas_vagas = Casa.objects.filter(
+        predio__gerente=gerente, 
+        inquilino__isnull=True
+    ).distinct()
+    
+    anos_de_contrato = [(i, f"{i} ano{'s' if i > 1 else ''}") for i in range(1, 6)]
+
+    if request.method == 'POST':
+        inquilino_id = request.POST.get('inquilino')
+        casa_id = request.POST.get('casa_vaga')
+        duracao_anos = request.POST.get('duracao_anos')
+        valor_renda = request.POST.get('valor_aluguel')
+
+        if not all([inquilino_id, casa_id, duracao_anos, valor_renda]):
+            messages.error(request, 'Por favor, preencha todos os campos.')
+            return redirect('adicionar_contrato')
+
+        try:
+            inquilino = get_object_or_404(Inquilino, id=inquilino_id)
+            casa = get_object_or_404(Casa, id=casa_id)
+            duracao_meses = int(duracao_anos) * 12
+            valor_renda = float(valor_renda.replace(',', '.'))
+
+            with transaction.atomic():
+                contrato = Contratos.objects.create(
+                    inquilino=inquilino,
+                    casa=casa,  # <- agora registra no contrato
+                    data_inicio=date.today(),
+                    valor_renda=valor_renda,
+                    duracao_meses=duracao_meses
+                )
+                
+                casa.inquilino = inquilino
+                casa.save()
+
+            messages.success(request, f'Contrato para {inquilino.user.username} criado com sucesso e casa atribuída.')
+            return redirect('ver_contratos')
+            
+        except (ValueError, TypeError):
+            messages.error(request, 'O valor da renda é inválido.')
+            return redirect('adicionar_contrato')
+        except Exception as e:
+            messages.error(request, f'Ocorreu um erro: {e}')
+            return redirect('adicionar_contrato')
+
+    context = {
+        'inquilinos_disponiveis': inquilinos_disponiveis,
+        'casas_vagas': casas_vagas,
+        'anos_de_contrato': anos_de_contrato,
+    }
+    return render(request, 'gerente/adicionar_contrato.html', context)
+
+
+@user_passes_test(is_gerente, login_url='login_gerente')
+def editar_contrato(request, pk):
+    contrato = get_object_or_404(Contratos, pk=pk)
+    gerente = request.user.gerente
+    
+    casa_atual = contrato.casa
+    casas_vagas_qs = Casa.objects.filter(
+        Q(predio__gerente=gerente, inquilino__isnull=True) | Q(id=casa_atual.id)
+    ).distinct()
+    
+    inquilinos_disponiveis = Inquilino.objects.filter(
+        Q(casas_alugadas__predio__gerente=gerente) | Q(casas_alugadas__isnull=True)
+    ).exclude(
+        contratos__isnull=False
+    ).distinct()
+    
+    if contrato.inquilino not in inquilinos_disponiveis:
+        inquilinos_disponiveis = list(inquilinos_disponiveis) + [contrato.inquilino]
+
+    anos_de_contrato = [(i, f"{i} ano{'s' if i > 1 else ''}") for i in range(1, 6)]
+
+    if request.method == 'POST':
+        novo_inquilino_id = request.POST.get('inquilino')
+        nova_casa_id = request.POST.get('casa_vaga')
+        nova_duracao_anos = request.POST.get('duracao_anos')
+        novo_valor_renda = request.POST.get('valor_aluguel')
+
+        if not all([novo_inquilino_id, nova_casa_id, nova_duracao_anos, novo_valor_renda]):
+            messages.error(request, 'Por favor, preencha todos os campos.')
+            return redirect('editar_contrato', pk=pk)
+
+        try:
+            novo_inquilino = get_object_or_404(Inquilino, id=novo_inquilino_id)
+            nova_casa = get_object_or_404(Casa, id=nova_casa_id)
+            nova_duracao_meses = int(nova_duracao_anos) * 12
+            novo_valor_renda = float(novo_valor_renda.replace(',', '.'))
+
+            with transaction.atomic():
+                if casa_atual and casa_atual.id != nova_casa.id:
+                    casa_atual.inquilino = None
+                    casa_atual.save()
+
+                nova_casa.inquilino = novo_inquilino
+                nova_casa.save()
+
+                contrato.inquilino = novo_inquilino
+                contrato.casa = nova_casa  # <- agora atualiza a casa no contrato
+                contrato.duracao_meses = nova_duracao_meses
+                contrato.valor_renda = novo_valor_renda
+                contrato.save()
+
+            messages.success(request, 'Contrato atualizado com sucesso.')
+            return redirect('ver_contratos')
+        
+        except (ValueError, TypeError):
+            messages.error(request, 'O valor da renda é inválido.')
+            return redirect('editar_contrato', pk=pk)
+        except Exception as e:
+            messages.error(request, f'Ocorreu um erro: {e}')
+            return redirect('editar_contrato', pk=pk)
+
+    context = {
+        'contrato': contrato,
+        'inquilinos_disponiveis': inquilinos_disponiveis,
+        'casas_vagas': casas_vagas_qs,
+        'anos_de_contrato': anos_de_contrato,
+        'casa_atual': casa_atual
+    }
+    return render(request, 'gerente/editar_contrato.html', context)
+
+@user_passes_test(is_gerente, login_url='login_gerente')
+def excluir_contrato(request, pk):
+    contrato = get_object_or_404(Contratos, pk=pk)
+    
+    # A exclusão deve ser feita apenas através de um POST,
+    # para evitar exclusões acidentais.
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                # Encontra a casa associada ao inquilino do contrato
+                casa_associada = contrato.inquilino.casas_alugadas.first()
+                
+                # Se houver uma casa, a libera
+                if casa_associada:
+                    casa_associada.inquilino = None
+                    casa_associada.save()
+
+                # Exclui o contrato
+                contrato.delete()
+
+            messages.success(request, 'Contrato excluído com sucesso e casa liberada.')
+            return redirect('ver_contratos')
+        
+        except Exception as e:
+            messages.error(request, f'Ocorreu um erro ao excluir o contrato: {e}')
+            return redirect('ver_contratos')
+
+    # Se a requisição não for POST, redireciona de volta
+    return redirect('ver_contratos')

@@ -26,27 +26,17 @@
             <div class="mb-4">
                 <label for="username" class="block text-sm font-medium text-gray-700">Nome de Utilizador</label>
                 <input type="text" name="username" id="username" required
-                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </div>
             <div class="mb-4">
                 <label for="password" class="block text-sm font-medium text-gray-700">Senha</label>
                 <input type="password" name="password" id="password" required
-                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
             </div>
             <div class="mb-4">
                 <label for="contacto" class="block text-sm font-medium text-gray-700">Contacto</label>
                 <input type="text" name="contacto" id="contacto" required
-                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-            </div>
-            <div class="mb-4">
-                <label for="casa_id" class="block text-sm font-medium text-gray-700">Casa Vaga (opcional)</label>
-                <select name="casa_id" id="casa_id"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                    <option value="">-- Selecione uma casa --</option>
-                    {% for casa in casas_vagas %}
-                        <option value="{{ casa.id }}">{{ casa.predio.nome }} - Casa {{ casa.numero }}</option>
-                    {% endfor %}
-                </select>
             </div>
             <button type="submit" class="w-full px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Salvar</button>
         </form>
