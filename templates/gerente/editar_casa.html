@@ -1,0 +1,54 @@
+{% extends 'gerente/base_gerente.html' %}
+{% load static %}
+
+{% block title %}Editar Casa{% endblock %}
+
+{% block inner_content %}
+<div class="container mx-auto p-4">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Editar Casa #{{ casa.numero }}</h1>
+        <a href="{% url 'ver_casas' %}" class="px-4 py-2 text-white bg-gray-500 rounded-md hover:bg-gray-600">Voltar</a>
+    </div>
+
+    {% if messages %}
+        <div class="p-4 rounded-md mb-4">
+            {% for message in messages %}
+                <div class="p-3 text-sm {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %} rounded-md" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="bg-white rounded-lg shadow p-6">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label for="numero" class="block text-sm font-medium text-gray-700">Número da Casa</label>
+                <input type="text" name="numero" id="numero" value="{{ casa.numero }}" required
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+            </div>
+            <div class="mb-4">
+                <label for="predio" class="block text-sm font-medium text-gray-700">Prédio</label>
+                <select name="predio" id="predio" required
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    {% for predio in predios %}
+                        <option value="{{ predio.id }}" {% if predio == casa.predio %}selected{% endif %}>{{ predio.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="inquilino" class="block text-sm font-medium text-gray-700">Inquilino (opcional)</label>
+                <select name="inquilino" id="inquilino"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    <option value="">-- Nenhum Inquilino --</option>
+                    {% for inquilino in inquilinos %}
+                        <option value="{{ inquilino.id }}" {% if inquilino == casa.inquilino %}selected{% endif %}>{{ inquilino.user.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="w-full px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Atualizar</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

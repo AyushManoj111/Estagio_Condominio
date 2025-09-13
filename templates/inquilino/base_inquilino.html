@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="flex min-h-screen">
+    {% include 'inquilino/sidebar.html' %}
+
+    <main class="flex-grow p-4">
+        {% block inner_content %}{% endblock %}
+    </main>
+</div>
+{% endblock %}

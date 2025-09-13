@@ -1,0 +1,63 @@
+{% extends 'inquilino/base_inquilino.html' %}
+{% load static %}
+
+{% block title %}Ver Manutenções{% endblock %}
+
+{% block inner_content %}
+<div class="container mx-auto p-4">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Histórico de Manutenções</h1>
+        <a href="{% url 'adicionar_manutencoes' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            Nova Solicitação
+        </a>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+        {% if manutencoes %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Tipo
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Descrição
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Estado
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Data
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for manutencao in manutencoes %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {{ manutencao.get_tipo_display }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-normal text-sm text-gray-500">
+                                    {{ manutencao.descricao }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                        {% if manutencao.estado == 'pendente' %}bg-yellow-100 text-yellow-800{% elif manutencao.estado == 'em_progresso' %}bg-blue-100 text-blue-800{% elif manutencao.estado == 'concluido' %}bg-green-100 text-green-800{% elif manutencao.estado == 'cancelado' %}bg-red-100 text-red-800{% endif %}">
+                                        {{ manutencao.get_estado_display }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ manutencao.data_solicitacao|date:"d M Y" }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-gray-500 text-center">Nenhuma solicitação de manutenção encontrada.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

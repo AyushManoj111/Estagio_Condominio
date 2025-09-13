@@ -1,0 +1,93 @@
+{% extends "administrador/base_administrador.html" %}
+{% load static %}
+
+{% block title %}Gerenciar Gerentes{% endblock %}
+
+{% block inner_content %}
+<div class="max-w-5xl mx-auto bg-white p-8 rounded-lg shadow-md mt-0">
+    {% if messages %}
+        <div class="mt-6 space-y-3">
+            {% for message in messages %}
+                <div class="p-3 text-sm font-medium rounded-lg text-center
+                    {% if message.tags == 'success' %} bg-green-50 text-green-700 border border-green-200
+                    {% elif message.tags == 'error' %} bg-red-50 text-red-700 border border-red-200
+                    {% else %} bg-blue-50 text-blue-700 border border-blue-200
+                    {% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold text-gray-800">Lista de Gerentes</h2>
+        <a href="{% url 'adicionar_gerente' %}" 
+           class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-lg shadow-md transition duration-150 ease-in-out">
+            Adicionar Novo Gerente
+        </a>
+    </div>
+
+    {% if gerentes %}
+        <div class="overflow-x-auto mt-4">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Nome de Usuário
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Email
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Contacto
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Ações
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for gerente in gerentes %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {{ gerente.user.username }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ gerente.user.email }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ gerente.contacto }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a href="{% url 'editar_gerente' gerente.id %}" 
+                                   class="text-indigo-600 hover:text-indigo-900 mr-4">
+                                    Editar
+                                </a>
+                                <form method="post" action="{% url 'deletar_gerente' gerente.id %}" onsubmit="return confirm('Tem certeza que deseja deletar este gerente?');" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            class="text-red-600 hover:text-red-900">
+                                        Deletar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-center text-gray-500 py-8">Ainda não há gerentes registados.</p>
+    {% endif %}
+
+    <div class="mt-8 text-center">
+        <a href="{% url 'dashboard_admin' %}" 
+           class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            <svg class="-ml-1 mr-2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+            </svg>
+            Voltar para o Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

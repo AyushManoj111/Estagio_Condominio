@@ -1,0 +1,118 @@
+<style>
+    .sidebar {
+        width: 70px;
+        background-color: #ffffff;
+        color: #333;
+        padding: 15px 10px;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        position: sticky;
+        top: 0;
+        align-items: center;
+    }
+
+    .sidebar-brand {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-bottom: 30px;
+        color: #4338CA; /* Cor primária - Índigo */
+        text-align: center;
+    }
+
+    .sidebar-nav-links {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        flex-grow: 1;
+        width: 100%;
+    }
+
+    .sidebar-nav-links li {
+        margin-bottom: 10px;
+    }
+
+    .sidebar-nav-links a {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 12px;
+        border-radius: 10px;
+        color: #555;
+        text-decoration: none;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .sidebar-nav-links a:hover {
+        background-color: #e6e9ff; /* Fundo mais claro para hover */
+        color: #4338CA; /* Cor primária para hover */
+    }
+
+    .sidebar-nav-links a.active {
+        background-color: #4338CA; /* Cor primária para item ativo */
+        color: #fff;
+    }
+
+    .sidebar-icon {
+        width: 22px;
+        height: 22px;
+    }
+
+    .sidebar-logout {
+        margin-top: auto;
+        width: 100%;
+    }
+
+    .sidebar-logout a {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 12px;
+        border-radius: 10px;
+        color: #555;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .sidebar-logout a:hover {
+        background-color: #ffe6e6;
+        color: #b30000;
+    }
+</style>
+
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <a href="{% url 'dashboard_admin' %}" title="Dashboard">
+            <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z"/>
+            </svg>
+        </a>
+    </div>
+
+    <ul class="sidebar-nav-links">
+        <li>
+            <a href="{% url 'ver_predios' %}" title="Gerir Prédios"
+               class="{% if 'predios' in request.resolver_match.url_name %}active{% endif %}">
+                <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-1.586A1 1 0 0114 5.414L15.414 4A2 2 0 0014 2H6a2 2 0 00-2 2zm10 2a1 1 0 100 2h1a1 1 0 100-2h-1z" clip-rule="evenodd"/>
+                </svg>
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'ver_gerentes' %}" title="Gerir Gerentes"
+               class="{% if 'gerentes' in request.resolver_match.url_name %}active{% endif %}">
+                <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.98 5.98 0 0010 16a5.979 5.979 0 004.546-2.916A5.003 5.003 0 0010 11z" clip-rule="evenodd"/>
+                </svg>
+            </a>
+        </li>
+    </ul>
+
+    <div class="sidebar-logout">
+        <a href="{% url 'logout_admin' %}" title="Sair">
+            <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h5a1 1 0 001-1v-2a1 1 0 00-1-1H4V5h4a1 1 0 001-1V3a1 1 0 00-1-1H3zm13.707 9.707a1 1 0 001.414-1.414l-4-4a1 1 0 00-1.414 1.414L15.586 11H8a1 1 0 100 2h7.586l-2.293 2.293a1 1 0 001.414 1.414l4-4z" clip-rule="evenodd"/>
+            </svg>
+        </a>
+    </div>
+</aside>

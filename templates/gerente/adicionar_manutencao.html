@@ -1,0 +1,108 @@
+{% extends 'gerente/base_gerente.html' %}
+{% load static %}
+
+{% block title %}Solicitar Manutenção{% endblock %}
+
+{% block inner_content %}
+<div class="container mx-auto p-4">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Solicitar Manutenção</h1>
+
+    <div class="bg-white rounded-lg shadow p-6">
+        <form action="{% url 'adicionar_manutencao' %}" method="post">
+            {% csrf_token %}
+
+            <div class="mb-4">
+                <label for="tipo" class="block text-sm font-medium text-gray-700">Tipo de Manutenção</label>
+                <select id="tipo" name="tipo" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    <option value="">Selecione o Tipo</option>
+                    {% for value, label in tipo_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-4" id="predio-group">
+                <label for="predio" class="block text-sm font-medium text-gray-700">Prédio</label>
+                <select id="predio" name="predio" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    <option value="">Selecione o Prédio</option>
+                    {% for predio in predios %}
+                        <option value="{{ predio.id }}">{{ predio.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-4" id="casa-group" style="display: none;">
+                <label for="casa" class="block text-sm font-medium text-gray-700">Casa</label>
+                <select id="casa" name="casa" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    <option value="">Selecione a Casa</option>
+                    {% for casa in casas %}
+                        <option value="{{ casa.id }}" data-predio-id="{{ casa.predio.id }}" style="display: none;">
+                            Casa {{ casa.numero }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label for="descricao" class="block text-sm font-medium text-gray-700">Descrição</label>
+                <textarea id="descricao" name="descricao" rows="4" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Descreva o problema em detalhes."></textarea>
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                    Salvar Manutenção
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tipoSelect = document.getElementById('tipo');
+        const predioSelect = document.getElementById('predio');
+        const casaSelect = document.getElementById('casa');
+        const casaGroup = document.getElementById('casa-group');
+
+        function updateCasaList() {
+            const selectedPredioId = predioSelect.value;
+
+            // Oculta todas as casas primeiro
+            const allCasaOptions = casaSelect.querySelectorAll('option[data-predio-id]');
+            allCasaOptions.forEach(option => {
+                option.style.display = 'none';
+            });
+
+            if (selectedPredioId) {
+                // Mostra apenas as casas do prédio selecionado
+                const relatedCasaOptions = casaSelect.querySelectorAll(`option[data-predio-id="${selectedPredioId}"]`);
+                relatedCasaOptions.forEach(option => {
+                    option.style.display = 'block';
+                });
+                casaSelect.value = ''; // Reseta a seleção da casa
+            }
+        }
+
+        function toggleFields() {
+            const selectedTipo = tipoSelect.value;
+            if (selectedTipo === 'geral') {
+                casaGroup.style.display = 'none';
+                casaSelect.removeAttribute('required');
+            } else {
+                casaGroup.style.display = 'block';
+                casaSelect.setAttribute('required', 'required');
+                casaSelect.value = ''; // Reseta a seleção da casa
+            }
+            updateCasaList();
+        }
+
+        // Adiciona event listeners
+        tipoSelect.addEventListener('change', toggleFields);
+        predioSelect.addEventListener('change', updateCasaList);
+
+        // Inicializa o estado dos campos ao carregar a página
+        toggleFields();
+    });
+</script>
+
+{% endblock %}

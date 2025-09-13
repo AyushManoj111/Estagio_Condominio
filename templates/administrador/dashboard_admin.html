@@ -1,0 +1,55 @@
+{% extends "administrador/base_administrador.html" %}
+{% load static %}
+
+{% block title %}Dashboard do Administrador{% endblock %}
+
+{% block inner_content %}
+<div class="max-w-5xl mx-auto bg-white p-8 rounded-lg shadow-md mt-0">
+    <h1 class="text-2xl font-bold text-gray-800 border-b-2 border-gray-200 pb-4">
+        Prédios e Seus Gerentes
+    </h1>
+
+    {% if predios %}
+        <div class="overflow-x-auto mt-0">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Nome do Prédio
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Localização
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Gerente Associado
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for predio in predios %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {{ predio.nome }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ predio.localizacao }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {% if predio.gerente %}
+                                    {{ predio.gerente.user.get_full_name|default:predio.gerente.user.username }}
+                                    <br>
+                                    <span class="text-xs text-gray-400">Contato: {{ predio.gerente.contacto }}</span>
+                                {% else %}
+                                    <span class="text-gray-400">N/A</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-center text-gray-500 py-8">Ainda não há prédios registados.</p>
+    {% endif %}
+</div>
+{% endblock %}

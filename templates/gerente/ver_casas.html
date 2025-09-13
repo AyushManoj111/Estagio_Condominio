@@ -1,0 +1,58 @@
+{% extends 'gerente/base_gerente.html' %}
+{% load static %}
+
+{% block title %}Casas{% endblock %}
+
+{% block inner_content %}
+<div class="container mx-auto p-4">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Minhas Casas</h1>
+        <a href="{% url 'adicionar_casa' %}" class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Adicionar Casa</a>
+    </div>
+
+    {% if messages %}
+        <div class="p-4 rounded-md mb-4">
+            {% for message in messages %}
+                <div class="p-3 text-sm {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %} rounded-md" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if casas %}
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número da Casa</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prédio</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inquilino</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for casa in casas %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ casa.numero }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ casa.predio.nome }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ casa.inquilino.user.username|default:"Vaga" }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                        <a href="{% url 'editar_casa' casa.id %}" class="text-indigo-600 hover:text-indigo-900 mr-4">Editar</a>
+                        <form action="{% url 'excluir_casa' casa.id %}" method="post" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Tem certeza que deseja excluir esta casa? Esta ação é irreversível.');">Excluir</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p class="text-gray-500 text-center">Nenhuma casa encontrada.</p>
+    {% endif %}
+</div>
+{% endblock %}

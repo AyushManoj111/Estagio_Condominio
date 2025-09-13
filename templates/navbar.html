@@ -1,0 +1,61 @@
+<style>
+    /* Estilos Minimalistas e Cinzentos */
+    .navbar {
+        background-color: #f8f9fa; /* Cinza muito claro, quase branco */
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #e9ecef; /* Linha sutil para separar o menu */
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    .navbar-brand {
+        color: #495057; /* Cinza escuro para o texto */
+        font-size: 1.5rem;
+        font-weight: 600; /* Um pouco mais de peso para o logo */
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    .navbar-brand:hover {
+        color: #212529; /* Cinza ainda mais escuro no hover */
+    }
+    .navbar-links {
+        display: flex;
+        gap: 2rem; /* Aumentei o espaçamento para uma sensação mais minimalista */
+    }
+    .navbar-links a {
+        color: #6c757d; /* Cinza médio para os links */
+        text-decoration: none;
+        font-weight: 500;
+        position: relative;
+        transition: color 0.3s ease;
+    }
+    .navbar-links a::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 2px;
+        bottom: -5px;
+        left: 0;
+        background-color: #adb5bd; /* Sublinhado sutil */
+        visibility: hidden;
+        transform: scaleX(0);
+        transition: all 0.3s ease-in-out;
+    }
+    .navbar-links a:hover::after {
+        visibility: visible;
+        transform: scaleX(1);
+    }
+    .navbar-links a:hover {
+        color: #495057; /* Cinza mais escuro no hover */
+    }
+</style>
+
+<nav class="navbar">
+    <a href="#" class="navbar-brand">CondoGest</a>
+    <div class="navbar-links">
+        <a href="{% url 'login_admin' %}">Administrador</a>
+        <a href="{% url 'login_gerente' %}">Gerente</a>
+        <a href="{% url 'login_inquilino' %}">Inquilino</a>
+    </div>
+</nav>

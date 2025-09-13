@@ -1,0 +1,134 @@
+<style>
+    .sidebar {
+        width: 70px; /* fino */
+        background-color: #ffffff; /* branco */
+        color: #333;
+        padding: 15px 10px;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        position: sticky;
+        top: 0;
+        align-items: center;
+    }
+
+    .sidebar-brand {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-bottom: 30px;
+        color: #0056b3;
+        text-align: center;
+    }
+
+    .sidebar-nav-links {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        flex-grow: 1;
+        width: 100%;
+    }
+
+    .sidebar-nav-links li {
+        margin-bottom: 10px;
+    }
+
+    .sidebar-nav-links a {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 12px;
+        border-radius: 10px;
+        color: #555;
+        text-decoration: none;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .sidebar-nav-links a:hover {
+        background-color: #e6f0ff;
+        color: #0056b3;
+    }
+
+    .sidebar-nav-links a.active {
+        background-color: #0056b3;
+        color: #fff;
+    }
+
+    .sidebar-icon {
+        width: 22px;
+        height: 22px;
+    }
+
+    .sidebar-logout {
+        margin-top: auto;
+        width: 100%;
+    }
+
+    .sidebar-logout a {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 12px;
+        border-radius: 10px;
+        color: #555;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .sidebar-logout a:hover {
+        background-color: #ffe6e6;
+        color: #b30000;
+    }
+</style>
+
+<aside class="sidebar">
+    <ul class="sidebar-nav-links">
+        <li>
+            <a href="{% url 'dashboard_inquilino' %}" title="Dashboard"
+                class="{% if request.resolver_match.url_name == 'dashboard_inquilino' %}active{% endif %}">
+                <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+                </svg>
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'dashboard_inquilino' %}" title="Finanças"
+               class="{% if request.resolver_match.url_name == 'financas_inquilino' %}active{% endif %}">
+                <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10v4a2 2 0 002-2V6a2 2 0 00-2-2H4zm2 6v4a2 2 0 002 2h8a2 2 0 002-2v-4H8a2 2 0 00-2-2v2z" clip-rule="evenodd"/>
+                </svg>
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'ver_manutencoes_inquilino' %}" title="Manutenções"
+               class="{% if 'manutencoes' in request.resolver_match.url_name %}active{% endif %}">
+                <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"/>
+                </svg>
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'dados_pessoais_inquilino' %}" title="Dados Pessoais"
+               class="{% if request.resolver_match.url_name == 'dados_pessoais_inquilino' %}active{% endif %}">
+                <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                </svg>
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'dashboard_inquilino' %}" title="Histórico"
+               class="{% if request.resolver_match.url_name == 'historico_inquilino' %}active{% endif %}">
+                <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                </svg>
+            </a>
+        </li>
+    </ul>
+
+    <div class="sidebar-logout">
+        <a href="{% url 'logout_inquilino' %}" title="Sair">
+            <svg class="sidebar-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h5a1 1 0 001-1v-2a1 1 0 00-1-1H4V5h4a1 1 0 001-1V3a1 1 0 00-1-1H3zm13.707 9.707a1 1 0 001.414-1.414l-4-4a1 1 0 00-1.414 1.414L15.586 11H8a1 1 0 100 2h7.586l-2.293 2.293a1 1 0 001.414 1.414l4-4z" clip-rule="evenodd"/>
+            </svg>
+        </a>
+    </div>
+</aside>

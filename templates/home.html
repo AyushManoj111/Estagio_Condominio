@@ -1,0 +1,113 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bem-vindo</title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            overflow-x: hidden;
+        }
+
+        /* Container ocupa toda a tela */
+        .main-container {
+            height: 100vh;
+            width: 100%;
+        }
+
+        /* Imagem de fundo */
+        .image-area {
+            height: 100%;
+            width: 100%;
+            background-image: url("{% static '4.jpg' %}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Sobreposição escura para melhor contraste */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.45);
+        }
+
+        /* Caixa de conteúdo central */
+        .content-box {
+            position: relative;
+            text-align: center;
+            padding: 2.5rem 2rem;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 1rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            max-width: 700px;
+            width: 90%;
+            animation: fadeInUp 1.2s ease;
+        }
+
+        .content-box h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: #222;
+        }
+
+        .content-box p {
+            font-size: 1.25rem;
+            color: #333;
+            margin: 0;
+        }
+
+        /* Efeito de animação */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsivo */
+        @media (max-width: 768px) {
+            .content-box h1 {
+                font-size: 2rem;
+            }
+            .content-box p {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="main-container">
+        <div class="image-area">
+            <div class="overlay"></div>
+            <div class="content-box">
+                <h1>Bem-vindo ao Nosso Serviço</h1>
+                <p>Gestão imobiliária simplificada para gerentes, inquilinos e administradores.</p>
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

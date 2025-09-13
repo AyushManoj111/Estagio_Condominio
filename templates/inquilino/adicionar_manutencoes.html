@@ -1,0 +1,60 @@
+{% extends 'inquilino/base_inquilino.html' %}
+{% load static %}
+
+{% block title %}Solicitar Manutenção{% endblock %}
+
+{% block inner_content %}
+<div class="container mx-auto p-4">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Solicitar Nova Manutenção</h1>
+        <a href="{% url 'ver_manutencoes_inquilino' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            Ver Manutenções
+        </a>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-bold mb-4 text-gray-700">Envie uma Nova Solicitação</h2>
+        
+        {% if messages %}
+            <div class="p-4 rounded-md mb-4">
+                {% for message in messages %}
+                    <div class="p-3 text-sm {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %} rounded-md" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if casa %}
+        <form method="post" action="{% url 'adicionar_manutencoes' %}">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label for="tipo" class="block text-sm font-medium text-gray-700">Tipo de Problema</label>
+                <select name="tipo" id="tipo" required
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    <option value="">-- Selecione o tipo --</option>
+                    {% for tipo, display_text in manutencao_choices %}
+                        {% if tipo != 'geral' %}
+                            <option value="{{ tipo }}">{{ display_text }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="descricao" class="block text-sm font-medium text-gray-700">
+                    Descreva o problema
+                </label>
+                <textarea name="descricao" id="descricao" rows="4" required
+                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
+            </div>
+            <button type="submit"
+                    class="w-full px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Enviar Solicitação
+            </button>
+        </form>
+        {% else %}
+            <p class="text-gray-500">Você só pode solicitar manutenção quando estiver associado a uma casa.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
