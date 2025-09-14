@@ -177,18 +177,12 @@ def excluir_casa(request, casa_id):
 
 @user_passes_test(is_gerente, login_url='login_gerente')
 def ver_inquilinos(request):
-    """
-    Exibe uma lista de inquilinos associados aos prédios do Gerente logado,
-    incluindo aqueles sem casa alugada.
-    """
     try:
         gerente = request.user.gerente
-        # Filtra inquilinos que têm uma casa em um prédio do gerente OU
-        # não têm nenhuma casa alugada.
-        inquilinos = Inquilino.objects.filter(
-            Q(casas_alugadas__predio__gerente=gerente) | Q(casas_alugadas__isnull=True)
-        ).distinct()
-    except Inquilino.DoesNotExist:
+        
+        # Agora o filtro é direto: mostre apenas os inquilinos registrados por este gerente.
+        inquilinos = Inquilino.objects.filter(gerente=gerente)
+    except Gerente.DoesNotExist:
         inquilinos = []
     
     context = {
@@ -220,7 +214,12 @@ def adicionar_inquilino(request):
         try:
             # 3. Cria o novo User e o perfil de Inquilino
             user = User.objects.create_user(username=username, password=password)
-            inquilino = Inquilino.objects.create(user=user, contacto=contacto)
+            
+            # Pega o gerente logado
+            gerente = request.user.gerente
+            
+            # Cria o perfil do inquilino e atribui o gerente
+            inquilino = Inquilino.objects.create(user=user, contacto=contacto, gerente=gerente)
             
             # 4. Adiciona o usuário ao grupo 'Inquilino'
             inquilino_group, created = Group.objects.get_or_create(name='Inquilino')
@@ -236,13 +235,13 @@ def adicionar_inquilino(request):
     # Para requisições GET, apenas renderiza o formulário
     return render(request, 'gerente/adicionar_inquilino.html')
 
-
 @user_passes_test(is_gerente, login_url='login_gerente')
 def editar_inquilino(request, inquilino_id):
     """
     Permite ao Gerente editar um inquilino existente.
     """
-    inquilino_perfil = get_object_or_404(Inquilino, id=inquilino_id, casas_alugadas__predio__gerente=request.user.gerente)
+    # Filtra o inquilino pelo ID e pelo gerente logado
+    inquilino_perfil = get_object_or_404(Inquilino, id=inquilino_id, gerente=request.user.gerente)
     inquilino_user = inquilino_perfil.user
     
     if request.method == 'POST':
@@ -279,7 +278,8 @@ def excluir_inquilino(request, inquilino_id):
     """
     Exclui um inquilino (e seu usuário associado) sem página de confirmação.
     """
-    inquilino_perfil = get_object_or_404(Inquilino, id=inquilino_id, casas_alugadas__predio__gerente=request.user.gerente)
+    # Filtra o inquilino pelo ID e pelo gerente logado
+    inquilino_perfil = get_object_or_404(Inquilino, id=inquilino_id, gerente=request.user.gerente)
 
     if request.method == 'POST':
         try:
@@ -448,12 +448,12 @@ def ver_contratos(request):
 def adicionar_contrato(request):
     gerente = request.user.gerente
     
-    inquilinos_disponiveis = Inquilino.objects.filter(
-        Q(casas_alugadas__predio__gerente=gerente) | Q(casas_alugadas__isnull=True)
-    ).exclude(
+    # 1. Obtenha os inquilinos que pertencem a este gerente e que não têm um contrato ativo.
+    inquilinos_disponiveis = Inquilino.objects.filter(gerente=gerente).exclude(
         contratos__isnull=False
     ).distinct()
 
+    # 2. Obtenha as casas vagas que pertencem a este gerente.
     casas_vagas = Casa.objects.filter(
         predio__gerente=gerente, 
         inquilino__isnull=True
@@ -472,15 +472,17 @@ def adicionar_contrato(request):
             return redirect('adicionar_contrato')
 
         try:
-            inquilino = get_object_or_404(Inquilino, id=inquilino_id)
-            casa = get_object_or_404(Casa, id=casa_id)
+            # 3. Validação de acesso: Garante que o inquilino e a casa pertencem ao gerente.
+            inquilino = get_object_or_404(Inquilino, id=inquilino_id, gerente=gerente)
+            casa = get_object_or_404(Casa, id=casa_id, predio__gerente=gerente)
+            
             duracao_meses = int(duracao_anos) * 12
             valor_renda = float(valor_renda.replace(',', '.'))
 
             with transaction.atomic():
                 contrato = Contratos.objects.create(
                     inquilino=inquilino,
-                    casa=casa,  # <- agora registra no contrato
+                    casa=casa, 
                     data_inicio=date.today(),
                     valor_renda=valor_renda,
                     duracao_meses=duracao_meses
@@ -509,24 +511,30 @@ def adicionar_contrato(request):
 
 @user_passes_test(is_gerente, login_url='login_gerente')
 def editar_contrato(request, pk):
-    contrato = get_object_or_404(Contratos, pk=pk)
+    # Garante que o contrato a ser editado pertence ao gerente logado.
+    contrato = get_object_or_404(Contratos, pk=pk, inquilino__gerente=request.user.gerente)
     gerente = request.user.gerente
     
     casa_atual = contrato.casa
+
+    # 1. Filtra as casas vagas para o gerente logado, e inclui a casa atual do contrato.
     casas_vagas_qs = Casa.objects.filter(
         Q(predio__gerente=gerente, inquilino__isnull=True) | Q(id=casa_atual.id)
     ).distinct()
     
-    inquilinos_disponiveis = Inquilino.objects.filter(
-        Q(casas_alugadas__predio__gerente=gerente) | Q(casas_alugadas__isnull=True)
-    ).exclude(
+    # 2. Filtra os inquilinos que pertencem a este gerente.
+    # Exclui inquilinos que já têm um contrato ativo, mas inclui o inquilino atual do contrato.
+    inquilinos_disponiveis = Inquilino.objects.filter(gerente=gerente).exclude(
         contratos__isnull=False
     ).distinct()
-    
-    if contrato.inquilino not in inquilinos_disponiveis:
-        inquilinos_disponiveis = list(inquilinos_disponiveis) + [contrato.inquilino]
+
+    # Adiciona o inquilino atual do contrato à lista de disponíveis.
+    inquilinos_disponiveis = list(inquilinos_disponiveis) + [contrato.inquilino]
 
     anos_de_contrato = [(i, f"{i} ano{'s' if i > 1 else ''}") for i in range(1, 6)]
+    
+    # Prepara o valor da duração em anos para o template
+    contrato_duracao_anos = int(contrato.duracao_meses / 12)
 
     if request.method == 'POST':
         novo_inquilino_id = request.POST.get('inquilino')
@@ -539,21 +547,26 @@ def editar_contrato(request, pk):
             return redirect('editar_contrato', pk=pk)
 
         try:
-            novo_inquilino = get_object_or_404(Inquilino, id=novo_inquilino_id)
-            nova_casa = get_object_or_404(Casa, id=nova_casa_id)
+            # 3. Validação de segurança: Garante que o novo inquilino e a nova casa pertencem ao gerente.
+            novo_inquilino = get_object_or_404(Inquilino, id=novo_inquilino_id, gerente=gerente)
+            nova_casa = get_object_or_404(Casa, id=nova_casa_id, predio__gerente=gerente)
+            
             nova_duracao_meses = int(nova_duracao_anos) * 12
             novo_valor_renda = float(novo_valor_renda.replace(',', '.'))
 
             with transaction.atomic():
+                # Liberta a casa anterior se ela for diferente da nova
                 if casa_atual and casa_atual.id != nova_casa.id:
                     casa_atual.inquilino = None
                     casa_atual.save()
 
+                # Atribui a nova casa ao novo inquilino
                 nova_casa.inquilino = novo_inquilino
                 nova_casa.save()
 
+                # Atualiza os dados do contrato
                 contrato.inquilino = novo_inquilino
-                contrato.casa = nova_casa  # <- agora atualiza a casa no contrato
+                contrato.casa = nova_casa
                 contrato.duracao_meses = nova_duracao_meses
                 contrato.valor_renda = novo_valor_renda
                 contrato.save()
@@ -573,6 +586,7 @@ def editar_contrato(request, pk):
         'inquilinos_disponiveis': inquilinos_disponiveis,
         'casas_vagas': casas_vagas_qs,
         'anos_de_contrato': anos_de_contrato,
+        'contrato_duracao_anos': contrato_duracao_anos,
         'casa_atual': casa_atual
     }
     return render(request, 'gerente/editar_contrato.html', context)

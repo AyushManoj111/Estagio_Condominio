@@ -44,7 +44,7 @@
                 <label for="duracao_anos" class="block text-sm font-medium text-gray-700">Duração do Contrato</label>
                 <select name="duracao_anos" id="duracao_anos" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                     {% for value, label in anos_de_contrato %}
-                        <option value="{{ value }}" {% if contrato.duracao_meses == value|add:"0"|mul:12 %}selected{% endif %}>{{ label }}</option>
+                        <option value="{{ value }}" {% if contrato_duracao_anos == value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>

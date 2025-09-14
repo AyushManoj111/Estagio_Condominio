@@ -8,6 +8,7 @@ class Inquilino(models.Model):
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     contacto = models.CharField(max_length=15, unique=True)
+    gerente = models.ForeignKey(Gerente, on_delete=models.SET_NULL, null=True, blank=True, related_name='inquilinos_registrados')
     
     def __str__(self):
         return self.user.get_full_name() or self.user.username
